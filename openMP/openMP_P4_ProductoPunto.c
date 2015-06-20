@@ -16,48 +16,33 @@ supongo que cada hilo esta escribiendo en su propio espacio de memoria, o compit
 
 int main(){
 
-int size = 1173;
-int *a = malloc(size * sizeof(int) );
-int *b = malloc(size * sizeof(int) );
+int size = 1500;
+int step_size  = (int) size/100;
+uint64_t *a = malloc(size * sizeof(uint64_t) );
+uint64_t *b = malloc(size * sizeof(uint64_t) );
 
-int idx=0,idx_a=0,idx_b=0;
-uintmax_t result=0;
-for(idx=0;idx<size*2;idx++){
-    if(idx%2==0){
-        a[idx_a] = idx;
-        idx_a++;
-    }else{
-        b[idx_b] = idx;
-        idx_b++;
-    }
+int idx=0,idx_n=0;
+uint64_t result = 0;
+for(idx=0;idx<size;idx++){
+        a[idx] = idx_n;
+        b[idx] = idx_n + 1 ;
+        idx_n+=2;
 }
-printf("idx_a ends at %i, idx_b ends at %i\n",idx_a,idx_b);
-printf("\na ends at %i, b ends at %i\n",a[size-1],b[size-1]);
+printf("ends in idx:%i, a:%u,n:%u",idx,a[idx-1],b[idx-1]);
+
 printf("\n Dot product of two vectors \n");
 idx =0, result=0;
 
-printf("pre-eliminary results are : %i \n",result);
 double start = omp_get_wtime();
-//#pragma omp parallel for \
-reduction(+:result) \
-ordered
+#pragma omp parallel for \
+reduction(+:result) 
 for(idx=0;idx<size;idx++){
-    if(idx%10000==0 || idx >= size - 1 ){
-        printf("\nresult at %i is %i",idx,result);
-        printf("\n a and b at %i are %i and %i",idx,a[idx],b[idx]);
-    }
-    int tmpResult = a[idx]*b[idx];
-    result += tmpResult;
-    if(idx%10000==0 || idx >= size - 1 ){
-        printf("\n result at %i is %i",idx,result);
-        printf("\n a*b at %i is  %i ",idx,a[idx]*b[idx]);
-        printf("\n a*b at %i is  %i ",idx,tmpResult);
-
-    }
+	if(idx >= 1470)
+	printf("\npartial result at %i is  %u, + %u*%u\n",idx,result,a[idx],b[idx]);
+	result += (uint64_t) a[idx]*b[idx];
 }
 double end = omp_get_wtime();
-printf("\n end at %i \n",idx);
-printf("\n Dot product completed successfully: %i\n",result);
+printf("\n Dot product completed successfully: %u\n",result);
 
 free(a);
 free(b);
