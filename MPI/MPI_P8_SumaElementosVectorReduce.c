@@ -1,26 +1,60 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-int main(int argc, char** argv) {
-// Initialize the MPI environment
-MPI_Init(NULL, NULL);
-// Find out rank, size
-int world_rank;
-MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-int world_size;
-MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-// We are assuming at least 2 processes for this task
-if (world_size < 2) {
-printf("World size must be greater than 1 for %s\n", argv[0]);
-MPI_Abort(MPI_COMM_WORLD, 1);
+int main(int argc, char *argv[]){
+
+int numprocs,rank,namelen;
+char processor_name[MPI_MAX_PROCESSOR_NAME];
+
+int size = 1000;
+int splitsize;
+//make arrays
+int *a = malloc(size * sizeof(int));
+int *b = malloc(size * sizeof(int));
+int *result = malloc(size * sizeof(int));
+int idx = 0;
+
+for(idx = 0;idx <size;idx++){
+    a[idx]=idx;
+    b[idx]=idx*2;
 }
-int number;
-if(world_rank==0){
-    number = -1;
-    MPI_Send(&number,1,MPI_INT,1,0,MPI_COMM_WORLD);
-} else if(world_rank==1){
-    MPI_Recv(&number,1,MPI_INT,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-    printf("Process 1 received number %d from process 0\n",number);
-}
+
+MPI_Init(&argc,&argv);
+MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+MPI_Get_processor_name(processor_name,&namelen);
+splitsize = (int) size/numprocs;
+int *sub_a = malloc(splitsize * sizeof(int));
+MPI_Scatter(a,splitsize,MPI_INT,sub_a,splitsize,MPI_INT,0,MPI_COMM_WORLD);
+
+int *sub_b = malloc(splitsize * sizeof(int));
+MPI_Scatter(b,splitsize,MPI_INT,sub_b,splitsize,MPI_INT,0,MPI_COMM_WORLD);
+
+int *sub_result = malloc(splitsize * sizeof(int));
+
+idx = 0;
+
+for(idx=0;idx<splitsize;idx++)
+    sub_result[idx] = sub_a[idx]+sub_b[idx];
+
+
+MPI_Reduce(sub_result,result,splitsize,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
+
 MPI_Finalize();
+
+if(rank==0){
+        for(idx=0;idx<size;idx+=(int) size/10)
+                printf("\n results at %i  %i+%i=%i \n ",idx,a[idx],b[idx],result[idx]);
 }
+
+free(a);
+free(b);
+free(result);
+
+free(sub_a);
+free(sub_b);
+free(sub_result);
+
+return 0;
+}
+

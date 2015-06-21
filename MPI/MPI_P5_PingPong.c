@@ -1,6 +1,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#define  PING_PONG_LIMIT  4
 int main(int argc, char** argv) {
 // Initialize the MPI environment
 MPI_Init(NULL, NULL);
@@ -14,13 +15,19 @@ if (world_size < 2) {
 printf("World size must be greater than 1 for %s\n", argv[0]);
 MPI_Abort(MPI_COMM_WORLD, 1);
 }
-int number;
-if(world_rank==0){
-    number = -1;
-    MPI_Send(&number,1,MPI_INT,1,0,MPI_COMM_WORLD);
-} else if(world_rank==1){
-    MPI_Recv(&number,1,MPI_INT,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-    printf("Process 1 received number %d from process 0\n",number);
+
+
+int ping_pong_count = 0;
+int partner_rank = (world_rank + 1) % 2;
+while(ping_pong_count < PING_PONG_LIMIT){
+    if(world_rank==ping_pong_count%2){
+	ping_pong_count++;
+	MPI_Send(&ping_pong_count,1,MPI_INT,partner_rank,0,MPI_COMM_WORLD);
+	printf("%i sent and incremented ping_pong_count %i to %i \n",world_rank,ping_pong_count,partner_rank);
+    } else {
+	MPI_Recv(&ping_pong_count,1,MPI_INT,partner_rank,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+        printf("%i received ping_pong_count %i from %i 0\n",world_rank,ping_pong_count,partner_rank);
+    }
 }
 MPI_Finalize();
 }
