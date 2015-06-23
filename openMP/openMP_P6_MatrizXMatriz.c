@@ -2,65 +2,63 @@
 Parallel and Distributed computing class
 OpenMP
 
-Practice 2: Parallelizing the dot product of 2 vectors
+Practice 6: Parallelizing the product of 2 matrices.
 */
 
 #include <stdio.h>
 #include <omp.h>
 #include <stdlib.h>
 #include <stdint.h>
-/*ejecuta varias veces el programa, que sucede, porque
-Cada ejecucion resulta en un resultado diferente.
-supongo que cada hilo esta escribiendo en su propio espacio de memoria, o compitiendo y sobreescribiendose unos a otros.
-*/
 
 int main(){
 
-int size = 1173;
-int *a = malloc(size * sizeof(int) );
-int *b = malloc(size * sizeof(int) );
+int size = 100;
+float *matA = malloc(size * size * sizeof(float));
+float *matB = malloc(size * size * sizeof(float));
+float *result = malloc(size * size * sizeof(float));
+float tmpResult;
 
-int idx=0,idx_a=0,idx_b=0;
-uintmax_t result=0;
-for(idx=0;idx<size*2;idx++){
-    if(idx%2==0){
-        a[idx_a] = idx;
-        idx_a++;
-    }else{
-        b[idx_b] = idx;
-        idx_b++;
+int idx_rows=0,idx_cols=0,idx_results=0;
+for(idx_rows=0;idx_rows<size;idx_rows++){
+    for(idx_cols=0;idx_cols<size;idx_cols++){
+        matA[idx_rows*size + idx_cols] = idx_rows;
+        matB[idx_rows*size + idx_cols] = idx_rows;
     }
 }
-printf("idx_a ends at %i, idx_b ends at %i\n",idx_a,idx_b);
-printf("\na ends at %i, b ends at %i\n",a[size-1],b[size-1]);
-printf("\n Dot product of two vectors \n");
-idx =0, result=0;
+/*
+for(idx_rows=0;idx_rows<size;idx_rows++)
+    for(idx_cols=0;idx_cols<size;idx_cols++)
+        printf("\n matA[%i][%i] = %f\n",idx_rows,idx_cols,matA[idx_rows*size+idx_cols]);
 
-printf("pre-eliminary results are : %i \n",result);
+for(idx_rows=0;idx_rows<size;idx_rows++)
+    for(idx_cols=0;idx_cols<size;idx_cols++)
+        printf("\n matB[%i][%i] = %f \n",idx_rows,idx_cols,matB[idx_rows*size+idx_cols]);
+*/
+printf("\n Multiply matrix * matrix \n");
 double start = omp_get_wtime();
-//#pragma omp parallel for \
-reduction(+:result) \
-ordered
-for(idx=0;idx<size;idx++){
-    if(idx%10000==0 || idx >= size - 1 ){
-        printf("\nresult at %i is %i",idx,result);
-        printf("\n a and b at %i are %i and %i",idx,a[idx],b[idx]);
+for(idx_results=0;idx_results<size;idx_results++)
+#pragma omp parallel for \
+reduction(+:tmpResult) \
+num_threads(1)
+    for(idx_rows=0;idx_rows<size;idx_rows++){
+        tmpResult = 0;
+        for(idx_cols=0;idx_cols<size;idx_cols++)
+            tmpResult += matA[idx_results*size + idx_cols]*matB[idx_cols*size+idx_rows];
+        result[idx_results*size + idx_rows] = tmpResult;
     }
-    int tmpResult = a[idx]*b[idx];
-    result += tmpResult;
-    if(idx%10000==0 || idx >= size - 1 ){
-        printf("\n result at %i is %i",idx,result);
-        printf("\n a*b at %i is  %i ",idx,a[idx]*b[idx]);
-        printf("\n a*b at %i is  %i ",idx,tmpResult);
-
-    }
-}
 double end = omp_get_wtime();
-printf("\n end at %i \n",idx);
-printf("\n Dot product completed successfully: %i\n",result);
 
-free(a);
-free(b);
+for(idx_rows=0;idx_rows<size;idx_rows++)
+    for(idx_cols=0;idx_cols<size;idx_cols++)
+        printf("\n result[%i][%i] = %f",idx_rows,idx_cols,result[idx_rows*size+idx_cols]);
+
+printf("\n Matrix * Matrix multiplication completed successfully in %f\n",end - start);
+
+//result[idx] = (idx*idx)*size
+
+free(matA);
+free(matB);
+free(result);
 
 return 0;
 }

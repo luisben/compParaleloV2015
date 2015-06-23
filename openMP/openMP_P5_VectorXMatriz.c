@@ -2,7 +2,7 @@
 Parallel and Distributed computing class
 OpenMP
 
-Practice 2: Parallelizing the dot product of 2 vectors
+Practice 5: Parallelizing the product of 1 vector and 1 matrix.
 */
 
 #include <stdio.h>
