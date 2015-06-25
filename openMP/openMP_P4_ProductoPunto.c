@@ -28,7 +28,6 @@ for(idx=0;idx<size;idx++){
         b[idx] = idx_n + 1 ;
         idx_n+=2;
 }
-printf("ends in idx:%i, a:%u,n:%u",idx,a[idx-1],b[idx-1]);
 
 printf("\n Dot product of two vectors \n");
 idx =0, result=0;
@@ -37,9 +36,12 @@ double start = omp_get_wtime();
 #pragma omp parallel for \
 reduction(+:result) 
 for(idx=0;idx<size;idx++){
-	if(idx >= 1470)
-	printf("\npartial result at %i is  %u, + %u*%u\n",idx,result,a[idx],b[idx]);
-	result += (uint64_t) a[idx]*b[idx];
+    uintmax_t tmpResult = a[idx]*b[idx];
+    if(/*idx%step_size==0 ||*/ idx >= 1470 ){
+        printf("\nresult at %i is %u",idx,result);
+        printf("\n a * b are %i * %i = %u",a[idx],b[idx],tmpResult);
+    }
+    result += tmpResult;
 }
 double end = omp_get_wtime();
 printf("\n Dot product completed successfully: %u\n",result);
