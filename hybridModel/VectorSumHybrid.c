@@ -67,7 +67,7 @@ free(sub_result);
 
 if(rank==0){
 	double endall = omp_get_wtime();
-	printf("\n total time: %d  \n",endall-startall);
+	printf("\n total time: %f  \n",endall-startall);
 }
 return 0;
 }
