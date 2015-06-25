@@ -49,7 +49,7 @@ int tmp;
 //sort subarray
 for(idx=0;idx<splitsize-2;idx++)
 if(idx%2==0)
-#pragma omp parallel default(shared) 
+#pragma omp parallel default(shared)
 {
 for(idx2=0;idx2<(splitsize/2)-1;idx2++)
     if(sub_a[2*idx2] < sub_a[2*idx2 +1]){
@@ -59,13 +59,13 @@ for(idx2=0;idx2<(splitsize/2)-1;idx2++)
 	}
 }
 else
-#pragma omp parallel default(shared) 
+#pragma omp parallel default(shared)
 {
 for(idx2=0;idx2<(splitsize/2)-2;idx2++)
     if(sub_a[2*idx2+1] < sub_a[2*idx2 +2]){
         tmp = sub_a[2*idx2+1];
         sub_a[2*idx2+1] = sub_a[2*idx2 +2];
-        sub_a[2*idx2 +2] = tmp; 
+        sub_a[2*idx2 +2] = tmp;
         }
 }
 
@@ -74,23 +74,23 @@ MPI_Gather(sub_a,splitsize,MPI_INT,result,splitsize,MPI_INT,0,MPI_COMM_WORLD);
 //sort results gain
 for(idx=0;idx<size-2;idx++)
 if(idx%2==0)
-#pragma omp parallel default(shared) 
+#pragma omp parallel default(shared)
 {
 for(idx2=0;idx2<(size/2)-1;idx2++)
     if(result[2*idx2] < result[2*idx2 +1]){
         tmp = result[2*idx2];
         result[2*idx2] = result[2*idx2 +1];
-        result[2*idx2 +1] = tmp; 
+        result[2*idx2 +1] = tmp;
         }
 }
 else
-#pragma omp parallel default(shared) 
+#pragma omp parallel default(shared)
 {
 for(idx2=0;idx2<(size/2)-2;idx2++)
     if(result[2*idx2+1] < result[2*idx2 +2]){
         tmp = result[2*idx2+1];
         result[2*idx2+1] = result[2*idx2 +2];
-        result[2*idx2 +2] = tmp; 
+        result[2*idx2 +2] = tmp;
         }
 }
 
