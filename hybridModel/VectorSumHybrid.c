@@ -52,7 +52,7 @@ MPI_Finalize();
 
 if(rank==0){
 	double endparallel = omp_get_wtime();
-	printf("\n parallel time: %d  \n",endparallel-startparallel);
+	printf("\n parallel time: %f  \n",endparallel-startparallel);
 	for(idx=0;idx<size;idx+=(int) size/10)
 		printf("\n results at %i  %i+%i=%i \n ",idx,a[idx],b[idx],result[idx]);
 }

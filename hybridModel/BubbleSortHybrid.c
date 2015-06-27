@@ -8,19 +8,14 @@ int main(int argc, char *argv[]){
 int iteration =0;
 double totaltime=0;
 
-
-
-
-
 int numprocs,rank,namelen;
 char processor_name[MPI_MAX_PROCESSOR_NAME];
 MPI_Init(&argc,&argv);
 
-for (iteration=0;iteration<10;iteration++){
-
+for (iteration=0;iteration<1;iteration++){
 
 srand(19813267);
-int size = 10000;
+int size = 50;
 int splitsize;
 //make arrays
 int *a = malloc(size * sizeof(int));
@@ -32,6 +27,7 @@ double startparallel = omp_get_wtime();
 #pragma omp parallel for
 for(idx = 0;idx <size;idx++){
     a[idx]=rand();
+    printf("\na[%i]=%i\n",idx,a[idx]);
 }
 
 MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
@@ -97,8 +93,8 @@ for(idx2=0;idx2<(size/2)-2;idx2++)
 
 
 if(rank==0){
-//	for(idx=0;idx<size;idx+=(int) size/10)
-//		printf("\n results at %i is %i \n ",idx,result[idx]);
+	for(idx=0;idx<size;idx+=(int) size/10)
+		printf("\n results at %i is %i \n ",idx,result[idx]);
 	double endparallel = omp_get_wtime();
 	printf("\n parallel time: %f  \n",endparallel-startparallel);
 	totaltime += (endparallel-startparallel);
@@ -116,7 +112,8 @@ free(sub_result);
 
 MPI_Finalize();
 
-printf("average time : %f:",totaltime/10.0f);
+
+//printf("average time : %f:",totaltime/10.0f);
 
 return 0;
 }
