@@ -13,7 +13,7 @@ int *a = malloc(size * sizeof(int));
 int result = 0;
 int idx = 0;
 int sub_result = 0;
-float start,end;
+double start,end;
 
 for(idx = 0;idx <size;idx++){
     a[idx]=idx;
@@ -24,7 +24,8 @@ MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
 MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 MPI_Barrier(MPI_COMM_WORLD);
-start = MPI_Wtime();
+if(rank==0)
+	start = MPI_Wtime();
 
 splitsize = (int) size/numprocs;
 int *sub_a = malloc(splitsize * sizeof(int));
@@ -41,13 +42,14 @@ for(idx=0;idx<numprocs;idx++)
     result += sub_results[idx];
 
 MPI_Barrier(MPI_COMM_WORLD);
-end = MPI_Wtime();
+if(rank==0)
+	end = MPI_Wtime();
 
 MPI_Finalize();
 
 if(rank==0){
 	printf("\n results is %i, should be %i  \n ",result,(size*(size-1))/2);
-	printf("\n time was : %f %f ",end,start);
+	printf("\n time was : %f \n ",end-start);
 }
 
 free(a);
