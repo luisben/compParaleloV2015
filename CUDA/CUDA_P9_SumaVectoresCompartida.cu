@@ -1,55 +1,64 @@
 #include <stdio.h>
-#define N 4194304
 #define THREADS 64
 
-__global__ void vecAdd(int *a, int *b, int *c){
+__global__ void vecSum(int *a, int *b, int size){
 	
-	int tid = blockIdx.x*blockDim.x + threadIdx.x;
-	if(tid < N )
-		c[tid] = a[tid] + b[tid];
+	__shared__ int c[THREADS];
+	int tid = blockDim.x*blockIdx.x+threadIdx.x;
+	int stid = threadIdx.x;
+	if(tid < size){
+		c[stid] = a[tid];
+		c[stid] += b[tid];
+	}
+		__syncthreads();
+	if(tid < size){
+		a[tid] = c[stid];
+	}
+	
 }
 
 int main(int argc, char* argv[]){
 
-	int *a,*b,*c;
-	int *dev_a,*dev_b,*dev_c;
-	int totalSize = N*sizeof(int);
-	int idx;
-	int size,blocks,threads;
-	
-	
+	//initialization code
+	int size,threads,blocks;
 	float total_time;
 	cudaEvent_t start,stop;
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
-	
-	size = N;
+
+	size = 2048*2048;
 	blocks = size/THREADS;
 	threads = THREADS;
+	while(blocks*threads < size)
+		blocks++;
+	int totalSize = size * sizeof(int);
+	
+	int *a,*b,*dev_a,*dev_b;
 
 	cudaMalloc((void**)&dev_a,totalSize);
 	cudaMalloc((void**)&dev_b,totalSize);
-	cudaMalloc((void**)&dev_c,totalSize);
 
 	a = (int*) malloc(totalSize);
 	b = (int*) malloc(totalSize);
-	c = (int*) malloc(totalSize);
-	
-	for(idx=0;idx<N;idx++){
+	//end mallocs
+
+	int idx;
+
+	for(idx=0;idx<size;idx++){
 		a[idx] = idx;
 		b[idx] = idx*2;
 	}
-
+	
+	//copy to dev
 	cudaMemcpy(dev_a,a,totalSize,cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_b,b,totalSize,cudaMemcpyHostToDevice);
 
-	
 	int iteration = 0;
 	float avg_time = 0.0;
 	for(iteration=0;iteration<10;iteration++){
 	//call kernel and measure times
 	cudaEventRecord(start,0);
-	vecAdd<<<blocks,threads>>>(dev_a,dev_b,dev_c);
+	vecSum<<<blocks,threads>>>(dev_a,dev_b,size);
 	cudaEventRecord(stop,0);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&total_time,start,stop);
@@ -58,15 +67,21 @@ int main(int argc, char* argv[]){
 	}
 	avg_time/=10.0;
 	printf("average time for %i size vector mult is %f ",size,avg_time);
-	cudaMemcpy(c,dev_c,totalSize,cudaMemcpyDeviceToHost);
-/*
-	for(idx=0;idx<N;idx++)
-		printf("\n%i+%i=%i\n",a[idx],b[idx],c[idx]);
-*/
+	//copy back and prints
+	cudaMemcpy(a,dev_a,totalSize,cudaMemcpyDeviceToHost);
+	for(idx=0;idx<size;idx+=size/5)
+		printf("\n a[%i]=%i\n",idx,a[idx]);
+ 
+	//free
+	free(a);
+	free(b);
+
 	cudaFree(dev_a);
 	cudaFree(dev_b);
-	cudaFree(dev_c);
-
+	
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
+		
 	return 0;
 }
 
